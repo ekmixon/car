@@ -15,22 +15,21 @@ import re
 from os import path
 
 def generate_car_object(detection_yaml, car_id, DETECTION_PATH):
-    car_object = dict()
-    car_object['title'] = detection_yaml['name']
-    car_object['submission_date'] = datetime.now().strftime('%Y/%m/%d')
-    car_object['information_domain'] = 'Analytic'
-    car_object['platforms'] = ['Windows']
-    car_object['subtypes'] = ['Process']
-    car_object['analytic_types'] = ['TTP']
-    car_object['contributors'] = ['Splunk Threat Research <research@splunk.com>']
+    car_object = {
+        'title': detection_yaml['name'],
+        'submission_date': datetime.now().strftime('%Y/%m/%d'),
+        'information_domain': 'Analytic',
+        'platforms': ['Windows'],
+        'subtypes': ['Process'],
+        'analytic_types': ['TTP'],
+        'contributors': ['Splunk Threat Research <research@splunk.com>'],
+    }
+
     car_object['id'] = car_id
     car_object['description'] = detection_yaml['description']
     car_object['coverage'] = detection_yaml['mitre_attacks']
 
-    implementation = []
-    splunk_implementation = dict()
-    splunk_implementation['description'] = detection_yaml['how_to_implement']
-
+    splunk_implementation = {'description': detection_yaml['how_to_implement']}
     # cleaning up unecessary macros from splunk
     search = re.sub('\s`security_content_summariesonly`', '', detection_yaml['search'])
     search = re.sub('\|(\s|)\`security_content_ctime\((\w+|\"\w+\")\)\`', '', search)
@@ -43,17 +42,28 @@ def generate_car_object(detection_yaml, car_id, DETECTION_PATH):
         splunk_implementation['data_model'] = detection_yaml['datamodel'][0]
     else:
         splunk_implementation['data_model'] = ''
-    implementation.append(splunk_implementation)
+    implementation = [splunk_implementation]
     car_object['implementations'] = implementation
 
-    unit_tests = []
-    unit_test = dict()
-    unit_test['configurations'] = ['Using Splunk [Attack Range](https://github.com/splunk/attack_range)']
-    unit_test['description'] = 'Replay the detection [dataset]({0})  using the Splunk attack range with the commands below'.format(detection_yaml['tags']['dataset'][0])
-    unit_test['commands'] = ['python attack_range.py replay -dn data_dump [--dump NAME_OF_DUMP]']
-    unit_tests.append(unit_test)
-    unit_test = dict()
-    unit_test['configurations'] = ['Using [Invoke-AtomicRedTeam](https://github.com/redcanaryco/invoke-atomicredteam)']
+    unit_test = {
+        'configurations': [
+            'Using Splunk [Attack Range](https://github.com/splunk/attack_range)'
+        ],
+        'description': 'Replay the detection [dataset]({0})  using the Splunk attack range with the commands below'.format(
+            detection_yaml['tags']['dataset'][0]
+        ),
+        'commands': [
+            'python attack_range.py replay -dn data_dump [--dump NAME_OF_DUMP]'
+        ],
+    }
+
+    unit_tests = [unit_test]
+    unit_test = {
+        'configurations': [
+            'Using [Invoke-AtomicRedTeam](https://github.com/redcanaryco/invoke-atomicredteam)'
+        ]
+    }
+
     unit_test['description'] = 'execute the atomic test [{0}](https://github.com/redcanaryco/atomic-red-team/tree/master/atomics/{0}) against a Windows target.'.format(detection_yaml['mitre_attacks'][0]['technique'])
     unit_test['commands'] = ['Invoke-AtomicTest {0}'.format(detection_yaml['mitre_attacks'][0]['technique'])]
     unit_tests.append(unit_test)
@@ -62,16 +72,9 @@ def generate_car_object(detection_yaml, car_id, DETECTION_PATH):
     return car_object
 
 def mitre_attack_object(technique, attack):
-    mitre_attack = dict()
-    mitre_attack['technique'] = technique.id
     # process tactics
-    tactics = []
-    for tactic in technique.tactics:
-        tactics.append(tactic.id)
-    mitre_attack['tactics'] = tactics
-    mitre_attack['coverage'] = 'Moderate'
-
-    return mitre_attack
+    tactics = [tactic.id for tactic in technique.tactics]
+    return {'technique': technique.id, 'tactics': tactics, 'coverage': 'Moderate'}
 
 def get_mitre_enrichment_new(attack, mitre_attack_id):
     for technique in attack.enterprise.techniques:
@@ -91,7 +94,7 @@ def generate_car_analytics(DETECTION_PATH, OUTPUT_FILE, attack, VERBOSE):
     if VERBOSE:
         print("reading splunk security content detection: {0}".format(DETECTION_PATH))
 
-    detection_yaml = dict()
+    detection_yaml = {}
     with open(DETECTION_PATH, 'r') as stream:
         try:
             object = list(yaml.safe_load_all(stream))[0]
@@ -118,7 +121,9 @@ def generate_car_analytics(DETECTION_PATH, OUTPUT_FILE, attack, VERBOSE):
     with open(OUTPUT_FILE, 'w') as file:
             documents = yaml.dump(car_object, file, sort_keys=False)
 
-    print("splunk_security_content_to_car.py wrote CAR analytic to: {}".format(OUTPUT_FILE))
+    print(
+        f"splunk_security_content_to_car.py wrote CAR analytic to: {OUTPUT_FILE}"
+    )
 
 if __name__ == "__main__":
 

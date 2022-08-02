@@ -1,5 +1,6 @@
 """This script generates redirects so the old car.mitre.org URLs go to the right place."""
 
+
 import csv
 from os import path, makedirs
 
@@ -13,9 +14,12 @@ for redirect in redirects:
     origpath = path.join(basedir, *redirect[0].split('/'))
 
     targetpath = redirect[1]
-    
+
     makedirs(origpath, exist_ok=True)
 
-    redirect_txt = """<meta http-equiv="refresh" content="0; url={}"/>""".format(targetpath)
+    redirect_txt = (
+        f"""<meta http-equiv="refresh" content="0; url={targetpath}"/>"""
+    )
+
 
     open(path.join(origpath, "index.html"), "w").write(redirect_txt)

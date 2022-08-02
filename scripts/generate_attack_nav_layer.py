@@ -31,10 +31,10 @@ def addMapping(technique, name, attack_mappings):
     if technique not in attack_mappings:
         attack_mappings[technique] = []
         attack_mappings[technique].append(name)
-    elif technique in attack_mappings:
+    else:
         car_entries = attack_mappings[technique]
         if name not in car_entries:
-            attack_mappings[technique].append(name)
+            car_entries.append(name)
 
 # Build up the mappings
 attack_mappings = {}
@@ -66,7 +66,5 @@ for k,v in attack_mappings.items():
         technique["showSubtechniques"] = True
     layer_json["techniques"].append(technique)
 
-# Output JSON to docs directory
-outfile = open("../docs/car_attack/car_attack.json","w")
-json.dump(layer_json, outfile, indent=4)
-outfile.close()
+with open("../docs/car_attack/car_attack.json","w") as outfile:
+    json.dump(layer_json, outfile, indent=4)
